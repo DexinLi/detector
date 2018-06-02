@@ -1,0 +1,54 @@
+import os
+from mxnet import io, ndarray
+import mxnet
+import numpy
+from struct import unpack
+import time
+
+
+def load(path):
+    start = time.time()
+    res = []
+    with open(path, 'rb') as f:
+        while True:
+            byte = f.read(1)
+            if byte:
+                i = unpack('b', byte)[0]
+                res.append(float(i))
+            else:
+                break
+    res = res + [0.0] * (1024 * 1024 - len(res))
+    end = time.time()
+    # print(path)
+    return res
+
+
+def loadpath():
+    dirs = ['windows10', 'windows7', 'xp', 'download']
+    train = []
+    for directory in dirs:
+        for root, _, files in os.walk(directory):
+            for file in files:
+                path = os.path.join(root, file)
+                if path.endswith('.exe') and os.path.getsize(path) <= 1024 * 1024:
+                    train.append((path, 1))
+    for root, _, files in os.walk('malware'):
+        for file in files:
+            path = os.path.join(root, file)
+            if path.endswith('.exe') and os.path.getsize(path) <= 1024 * 1024:
+                train.append((path, 0))
+    return train
+
+
+def get_iter(dataset, batch_size, ctx):
+    n = len(dataset)
+    res = []
+    for i in range(n // batch_size):
+        x = []
+        y = []
+        for j in range(batch_size):
+            data = dataset[i * batch_size + j]
+            x.append(data[0])
+            y.append(data[1])
+        res.append((x, y))
+    return res
