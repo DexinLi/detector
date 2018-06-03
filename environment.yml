@@ -1,0 +1,11 @@
+name: test
+
+dependencies:
+
+- python=3
+
+- numpy
+
+- pip:
+
+  - mxnet-cu80>=1.2.0b20180427
