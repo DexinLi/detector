@@ -6,7 +6,7 @@ import os
 import numpy
 import load
 
-ctx = mxnet.cpu()
+ctx = mxnet.gpu()
 
 
 def _get_batch(batch, ctx):
@@ -125,17 +125,17 @@ net.add(
 )
 
 if(os.path.exists('param')):
-    net.load_params('param')
+    net.load_params('param',ctx=ctx)
 else:
     net.initialize(force_reinit=True, init=init.Xavier(), ctx=ctx)
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
 
-trainer = gluon.Trainer(net.collect_params(), 'Adam', {'learning_rate': 0.008})
+trainer = gluon.Trainer(net.collect_params(), 'sgd', {'learning_rate': 0.008})
 import random
 
 data = load.loadpath()
 random.shuffle(data)
-batch_size = 4
+batch_size = 8
 train_data = load.get_iter(data[100:], batch_size=batch_size, ctx=ctx)
 test_data = load.get_iter(data[:100], batch_size=batch_size, ctx=ctx)
 train(train_data, test_data, net, loss, trainer, ctx, 10, 10)
