@@ -137,4 +137,4 @@ random.shuffle(data)
 batch_size = 8
 train_data = load.get_iter(data[500:], batch_size=batch_size)
 test_data = load.get_iter(data[:500], batch_size=batch_size)
-train(train_data, test_data, net, loss, trainer, ctx, 10, 10)
+train(train_data, test_data, net, loss, trainer, ctx, 5000, 10)
