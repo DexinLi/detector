@@ -15,7 +15,6 @@ def _get_batch(batch, ctx):
     if isinstance(ctx, mxnet.Context):
         ctx = [ctx]
     features, labels = batch
-    features = [[load.load(path)] for path in features]
     features = ndarray.array(features)
     labels = ndarray.array(labels)
 
@@ -124,8 +123,8 @@ net.add(
     nn.Dense(128, activation='relu'),
 )
 
-if(os.path.exists('param')):
-    net.load_params('param',ctx=ctx)
+if (os.path.exists('param')):
+    net.load_params('param', ctx=ctx)
 else:
     net.initialize(force_reinit=True, init=init.Xavier(), ctx=ctx)
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
@@ -136,6 +135,6 @@ import random
 data = load.loadpath()
 random.shuffle(data)
 batch_size = 8
-train_data = load.get_iter(data[100:], batch_size=batch_size, ctx=ctx)
-test_data = load.get_iter(data[:100], batch_size=batch_size, ctx=ctx)
+train_data = load.get_iter(data[500:], batch_size=batch_size)
+test_data = load.get_iter(data[:500], batch_size=batch_size)
 train(train_data, test_data, net, loss, trainer, ctx, 10, 10)

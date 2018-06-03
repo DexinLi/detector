@@ -20,27 +20,32 @@ def load(path):
     res = res + [0.0] * (1024 * 1024 - len(res))
     end = time.time()
     # print(path)
-    return res
+    return [res]
 
 
 def loadpath():
     dirs = ['windows10', 'windows7', 'xp', 'download']
     train = []
+    num = 0
     for directory in dirs:
         for root, _, files in os.walk(directory):
             for file in files:
                 path = os.path.join(root, file)
                 if path.endswith('.exe') and os.path.getsize(path) <= 1024 * 1024:
-                    train.append((path, 1))
+                    train.append((load(path), 1))
+                    num+=1
+                    print(num)
     for root, _, files in os.walk('malware'):
         for file in files:
             path = os.path.join(root, file)
             if path.endswith('.exe') and os.path.getsize(path) <= 1024 * 1024:
-                train.append((path, 0))
+                train.append((load(path), 0))
+                num+=1
+                print(num)
     return train
 
 
-def get_iter(dataset, batch_size, ctx):
+def get_iter(dataset, batch_size):
     n = len(dataset)
     res = []
     for i in range(n // batch_size):
