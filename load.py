@@ -32,14 +32,14 @@ def loadpath():
             for file in files:
                 path = os.path.join(root, file)
                 if path.endswith('.exe') and os.path.getsize(path) <= 1024 * 1024:
-                    train.append((load(path), 1))
+                    train.append((path, 1))
                     num+=1
                     print(num)
     for root, _, files in os.walk('malware'):
         for file in files:
             path = os.path.join(root, file)
             if path.endswith('.exe') and os.path.getsize(path) <= 1024 * 1024:
-                train.append((load(path), 0))
+                train.append((path, 0))
                 num+=1
                 print(num)
     return train

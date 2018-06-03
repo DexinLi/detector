@@ -15,6 +15,7 @@ def _get_batch(batch, ctx):
     if isinstance(ctx, mxnet.Context):
         ctx = [ctx]
     features, labels = batch
+    features = [load.load(path) for path in features]
     features = ndarray.array(features)
     labels = ndarray.array(labels)
 
