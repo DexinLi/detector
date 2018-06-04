@@ -15,7 +15,7 @@ def _get_batch(batch, ctx):
     if isinstance(ctx, mxnet.Context):
         ctx = [ctx]
     features, labels = batch
-    features = [load.load(path) for path in features]
+    features = [[data + (1024 * 1024 - len(data)) * [0]] for data in features]
     features = ndarray.array(features)
     labels = ndarray.array(labels)
 
@@ -122,6 +122,7 @@ net.add(
     nn.Conv1D(channels=128, kernel_size=8, strides=4, activation='relu'),
     nn.MaxPool1D(pool_size=4, strides=4),
     nn.Dense(128, activation='relu'),
+    nn.Dense(2, activation='relu')
 )
 
 if (os.path.exists('param')):
@@ -136,6 +137,6 @@ import random
 data = load.loadpath()
 random.shuffle(data)
 batch_size = 8
-train_data = load.get_iter(data[500:], batch_size=batch_size)
-test_data = load.get_iter(data[:500], batch_size=batch_size)
+train_data = load.get_iter(data[1000:], batch_size=batch_size)
+test_data = load.get_iter(data[:1000], batch_size=batch_size)
 train(train_data, test_data, net, loss, trainer, ctx, 5000, 10)

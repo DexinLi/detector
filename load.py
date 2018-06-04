@@ -11,16 +11,16 @@ def load(path):
     res = []
     with open(path, 'rb') as f:
         while True:
-            byte = f.read(1)
+            byte = f.read(8192)
             if byte:
-                i = unpack('b', byte)[0]
-                res.append(float(i))
+                i = unpack('b' * len(byte), byte)
+                res += i
             else:
                 break
-    res = res + [0.0] * (1024 * 1024 - len(res))
+    res = res
     end = time.time()
     # print(path)
-    return [res]
+    return res
 
 
 def loadpath():
@@ -32,15 +32,15 @@ def loadpath():
             for file in files:
                 path = os.path.join(root, file)
                 if path.endswith('.exe') and os.path.getsize(path) <= 1024 * 1024:
-                    train.append((path, 1))
-                    num+=1
+                    train.append((load(path), 1))
+                    num += 1
                     print(num)
     for root, _, files in os.walk('malware'):
         for file in files:
             path = os.path.join(root, file)
             if path.endswith('.exe') and os.path.getsize(path) <= 1024 * 1024:
-                train.append((path, 0))
-                num+=1
+                train.append((load(path), 0))
+                num += 1
                 print(num)
     return train
 
