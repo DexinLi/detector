@@ -4,6 +4,7 @@ import mxnet
 import time
 import os
 import numpy
+import random
 import load
 
 ctx = mxnet.gpu()
@@ -16,14 +17,12 @@ def _get_batch(batch, ctx):
         ctx = [ctx]
     features, labels = batch
     features = [[data + (1024 * 1024 - len(data)) * [0]] for data in features]
-    features = ndarray.array(features)
-    labels = ndarray.array(labels)
 
     return (gutils.split_and_load(features, ctx),
 
             gutils.split_and_load(labels, ctx),
 
-            features.shape[0])
+            len(features))
     # return (features,labels,features.shape[0])
 
 
@@ -53,15 +52,18 @@ def evaluate_accuracy(data_iter, net, ctx=[mxnet.cpu()]):
     return acc.asscalar() / n
 
 
-def train(train_iter, test_iter, net, loss, trainer, ctx, num_epochs, print_batches=None):
+def train(alldata, batch_size, net, loss, trainer, ctx, num_epochs, print_batches=None):
     """Train and evaluate a model."""
 
     print("training on", ctx)
 
     if isinstance(ctx, mxnet.Context):
         ctx = [ctx]
-
+    test_iter = load.get_iter(alldata[:1000], batch_size=100)
+    train_data = alldata[1000:]
     for epoch in range(1, num_epochs + 1):
+        random.shuffle(train_data)
+        train_iter = load.get_iter(train_data, batch_size=batch_size)
 
         train_l_sum, train_acc_sum, n, m = 0.0, 0.0, 0.0, 0.0
 
@@ -131,12 +133,8 @@ else:
     net.initialize(force_reinit=True, init=init.Xavier(), ctx=ctx)
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
 
-trainer = gluon.Trainer(net.collect_params(), 'sgd', {'learning_rate': 0.008})
-import random
-
-data = load.loadpath()
-random.shuffle(data)
-batch_size = 8
-train_data = load.get_iter(data[1000:], batch_size=batch_size)
-test_data = load.get_iter(data[:1000], batch_size=batch_size)
-train(train_data, test_data, net, loss, trainer, ctx, 5000, 10)
+trainer = gluon.Trainer(net.collect_params(), 'sgd', {'learning_rate': 0.008, 'wd': 1e-4})
+alldata = load.loadpath()
+random.shuffle(alldata)
+batch_size = 32
+train(alldata, batch_size, net, loss, trainer, ctx, 10, 10)
