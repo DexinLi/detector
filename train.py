@@ -7,7 +7,14 @@ import numpy
 import random
 import load
 
-ctx = mxnet.cpu()
+
+def get_ctx():
+    ctx = mxnet.gpu()
+    try:
+        ndarray.array([0], ctx)
+    except:
+        ctx = mxnet.cpu()
+    return ctx
 
 
 def _get_batch(batch, ctx):
@@ -138,5 +145,5 @@ loss = gluon.loss.SoftmaxCrossEntropyLoss()
 trainer = gluon.Trainer(net.collect_params(), 'sgd', {'learning_rate': 0.008, 'wd': 1e-4})
 train_data, test_data = load.loadpath()
 batch_size = 16
-
+ctx = get_ctx()
 train(train_data, test_data, batch_size, net, loss, trainer, ctx, 20, 10)
