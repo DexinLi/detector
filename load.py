@@ -7,7 +7,6 @@ import time
 
 
 def load(path):
-    start = time.time()
     res = []
     with open(path, 'rb') as f:
         while True:
@@ -17,32 +16,27 @@ def load(path):
                 res += i
             else:
                 break
-    res = res
-    end = time.time()
-    # print(path)
     return res
 
 
 def loadpath():
-    dirs = ['windows10', 'windows7', 'xp', 'download']
+    with open('test.txt', 'r') as f:
+        testfiles = f.read().splitlines()
+    with open('train.txt','r') as f:
+        trainfiles = f.read().splitlines()
+    test = []
+    for f in testfiles:
+        if f.find('malware') != -1:
+            test.append((load(f), 0))
+        else:
+            test.append((load(f), 1))
     train = []
-    num = 0
-    for directory in dirs:
-        for root, _, files in os.walk(directory):
-            for file in files:
-                path = os.path.join(root, file)
-                if path.endswith('.exe') and os.path.getsize(path) <= 1024 * 1024:
-                    train.append((load(path), 1))
-                    num += 1
-                    print(num)
-    for root, _, files in os.walk('malware'):
-        for file in files:
-            path = os.path.join(root, file)
-            if path.endswith('.exe') and os.path.getsize(path) <= 1024 * 1024:
-                train.append((load(path), 0))
-                num += 1
-                print(num)
-    return train
+    for f in trainfiles:
+        if f.find('malware') != -1:
+            train.append((load(f), 0))
+        else:
+            train.append((load(f), 1))
+    return train, test
 
 
 def get_iter(dataset, batch_size):

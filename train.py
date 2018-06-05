@@ -7,7 +7,7 @@ import numpy
 import random
 import load
 
-ctx = mxnet.gpu()
+ctx = mxnet.cpu()
 
 
 def _get_batch(batch, ctx):
@@ -52,15 +52,14 @@ def evaluate_accuracy(data_iter, net, ctx=[mxnet.cpu()]):
     return acc.asscalar() / n
 
 
-def train(alldata, batch_size, net, loss, trainer, ctx, num_epochs, print_batches=None):
+def train(train_data, test_data, batch_size, net, loss, trainer, ctx, num_epochs, print_batches=None):
     """Train and evaluate a model."""
 
     print("training on", ctx)
 
     if isinstance(ctx, mxnet.Context):
         ctx = [ctx]
-    test_iter = load.get_iter(alldata[:1000], batch_size=100)
-    train_data = alldata[1000:]
+    test_iter = load.get_iter(test_data, batch_size=100)
     for epoch in range(1, num_epochs + 1):
         random.shuffle(train_data)
         train_iter = load.get_iter(train_data, batch_size=batch_size)
@@ -113,18 +112,21 @@ def train(alldata, batch_size, net, loss, trainer, ctx, num_epochs, print_batche
 
         ))
         net.save_params('param')
+        net.save_params("train_acc %.3f-test_acc %.3f_param" % (
+
+            train_acc_sum / m, test_acc))
 
 
 net = nn.Sequential()
 net.add(
-    nn.Conv1D(channels=8, kernel_size=4, padding=0, activation='sigmoid'),
+    nn.Conv1D(channels=16, kernel_size=4, padding=0, activation='sigmoid'),
     nn.MaxPool1D(strides=2),
     nn.Conv1D(channels=64, kernel_size=512, strides=512, activation='relu'),
     nn.MaxPool1D(pool_size=4, strides=4),
     nn.Conv1D(channels=128, kernel_size=8, strides=4, activation='relu'),
     nn.MaxPool1D(pool_size=4, strides=4),
     nn.Dense(128, activation='relu'),
-    nn.Dense(2, activation='relu')
+    nn.Dense(2)
 )
 
 if (os.path.exists('param')):
@@ -134,7 +136,7 @@ else:
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
 
 trainer = gluon.Trainer(net.collect_params(), 'sgd', {'learning_rate': 0.008, 'wd': 1e-4})
-alldata = load.loadpath()
-random.shuffle(alldata)
-batch_size = 32
-train(alldata, batch_size, net, loss, trainer, ctx, 10, 10)
+train_data, test_data = load.loadpath()
+batch_size = 16
+
+train(train_data, test_data, batch_size, net, loss, trainer, ctx, 20, 10)
