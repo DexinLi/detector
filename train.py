@@ -141,8 +141,9 @@ if (os.path.exists('param')):
 else:
     net.initialize(force_reinit=True, init=init.Xavier(), ctx=ctx)
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
-
-trainer = gluon.Trainer(net.collect_params(), 'sgd', {'learning_rate': 0.008, 'wd': 2e-4})
+scheduler = mxnet.lr_scheduler.FactorScheduler(100, 0.9)
+trainer = gluon.Trainer(net.collect_params(), 'sgd',
+                        {'learning_rate': 0.008, 'wd': 2e-4, 'lr_scheduler': scheduler, 'momentum': 0.9})
 train_data, test_data = load.loadpath()
 batch_size = 32
 train(train_data, test_data, batch_size, net, loss, trainer, ctx, 20, 10)
