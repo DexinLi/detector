@@ -126,7 +126,7 @@ def train(train_data, test_data, batch_size, net, loss, trainer, ctx, num_epochs
 
 net = nn.Sequential()
 net.add(
-    nn.Conv1D(channels=16, kernel_size=4, padding=0, activation='sigmoid'),
+    nn.Conv1D(channels=8, kernel_size=6, padding=0, activation='sigmoid'),
     nn.MaxPool1D(strides=2),
     nn.Conv1D(channels=64, kernel_size=512, strides=512, activation='relu'),
     nn.MaxPool1D(pool_size=4, strides=4),
@@ -135,15 +135,14 @@ net.add(
     nn.Dense(128, activation='relu'),
     nn.Dense(2)
 )
-
+ctx = get_ctx()
 if (os.path.exists('param')):
     net.load_params('param', ctx=ctx)
 else:
     net.initialize(force_reinit=True, init=init.Xavier(), ctx=ctx)
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
 
-trainer = gluon.Trainer(net.collect_params(), 'sgd', {'learning_rate': 0.008, 'wd': 1e-4})
+trainer = gluon.Trainer(net.collect_params(), 'sgd', {'learning_rate': 0.008, 'wd': 2e-4})
 train_data, test_data = load.loadpath()
-batch_size = 16
-ctx = get_ctx()
+batch_size = 32
 train(train_data, test_data, batch_size, net, loss, trainer, ctx, 20, 10)
