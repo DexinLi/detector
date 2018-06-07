@@ -126,12 +126,13 @@ def train(train_data, test_data, batch_size, net, loss, trainer, ctx, num_epochs
 
 net = nn.Sequential()
 net.add(
-    nn.Conv1D(channels=8, kernel_size=6, padding=0, activation='sigmoid'),
+    nn.Conv1D(channels=8, kernel_size=4, padding=0, activation='sigmoid'),
     nn.MaxPool1D(strides=2),
     nn.Conv1D(channels=64, kernel_size=512, strides=512, activation='relu'),
     nn.MaxPool1D(pool_size=4, strides=4),
     nn.Conv1D(channels=128, kernel_size=8, strides=4, activation='relu'),
     nn.MaxPool1D(pool_size=4, strides=4),
+    nn.Dropout(0.5),
     nn.Dense(128, activation='relu'),
     nn.Dense(2)
 )
