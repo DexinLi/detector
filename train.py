@@ -6,6 +6,7 @@ import os
 import numpy
 import random
 import load
+import model
 
 
 def get_ctx():
@@ -124,20 +125,9 @@ def train(train_data, test_data, batch_size, net, loss, trainer, ctx, num_epochs
             train_acc_sum / m, test_acc))
 
 
-net = nn.Sequential()
-net.add(
-    nn.Conv1D(channels=8, kernel_size=4, padding=0, activation='sigmoid'),
-    nn.MaxPool1D(strides=2),
-    nn.Conv1D(channels=64, kernel_size=512, strides=512, activation='relu'),
-    nn.MaxPool1D(pool_size=4, strides=4),
-    nn.Conv1D(channels=128, kernel_size=8, strides=4, activation='relu'),
-    nn.MaxPool1D(pool_size=4, strides=4),
-    nn.Dropout(0.5),
-    nn.Dense(128, activation='relu'),
-    nn.Dense(2)
-)
+net = model.get_netD()
 ctx = get_ctx()
-if (os.path.exists('param')):
+if os.path.exists('param'):
     net.load_params('param', ctx=ctx)
 else:
     net.initialize(force_reinit=True, init=init.Xavier(), ctx=ctx)
@@ -147,4 +137,4 @@ trainer = gluon.Trainer(net.collect_params(), 'sgd',
                         {'learning_rate': 0.008, 'wd': 2e-4, 'lr_scheduler': scheduler, 'momentum': 0.9})
 train_data, test_data = load.loadpath()
 batch_size = 32
-train(train_data, test_data, batch_size, net, loss, trainer, ctx, 20, 10)
+train(train_data, test_data, batch_size, net, loss, trainer, ctx, 30, 10)
