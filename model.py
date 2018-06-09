@@ -25,3 +25,14 @@ def get_netD():
              nn.Dense(128),
              nn.Dense(2))
     return netD
+
+
+def get_netD1():
+    netD = nn.Sequential()
+    netD.add(nn.Conv1D(channels=8, kernel_size=4, strides=1, activation='relu'),
+             nn.MaxPool1D(pool_size=4, strides=1),
+             nn.Conv1D(channels=128, kernel_size=512, strides=512, activation='relu'),
+             nn.MaxPool1D(pool_size=4, strides=4),
+             nn.Dense(128),
+             nn.Dense(2))
+    return netD
