@@ -2,17 +2,18 @@ from mxnet.gluon import nn
 import mxnet
 
 
-class GLU(nn.Block):
+class GLU(nn.HybridBlock):
     def __init__(self, channels, kernel_size, stride):
         super(GLU, self).__init__()
         self.conv1 = nn.Conv1D(channels, kernel_size, stride)
         self.conv2 = nn.Conv1D(channels, kernel_size, stride)
 
-    def forward(self, X):
+    def hybrid_forward(self, F, X, *args, **kwargs):
         X = X.transpose((0, 2, 1))
         Y1 = self.conv1(X)
         Y2 = self.conv2(X)
         Z = mxnet.nd.multiply(Y1, mxnet.nd.sigmoid(Y2))
+        Z = Z.transpose((0, 2, 1))
         return Z.reshape((Z.shape[0], 1, -1))
 
 
