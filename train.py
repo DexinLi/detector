@@ -120,9 +120,9 @@ def train(train_data, test_data, batch_size, net, loss, trainer, ctx, num_epochs
 
         ))
         net.save_params('param')
-        net.save_params("train_acc %.3f-test_acc %.3f_param" % (
+        net.save_params("test_acc_%.3f_train_acc_%.3f-param" % (
 
-            train_acc_sum / m, test_acc))
+            test_acc, train_acc_sum / m))
 
 
 net = model.get_netD()
