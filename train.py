@@ -24,7 +24,7 @@ def _get_batch(batch, ctx):
     if isinstance(ctx, mxnet.Context):
         ctx = [ctx]
     features, labels = batch
-    features = [[data + (1024 * 1024 - len(data)) * [0]] for data in features]
+    features = [data + (1024 * 1024 - len(data)) * [0] for data in features]
 
     return (gutils.split_and_load(features, ctx),
 
