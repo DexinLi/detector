@@ -4,6 +4,7 @@ import mxnet
 import numpy
 from struct import unpack
 import time
+import random
 
 
 def load(path):
@@ -24,31 +25,39 @@ def loadpath():
         testfiles = f.read().splitlines()
     with open('train.txt', 'r') as f:
         trainfiles = f.read().splitlines()
-    test = []
+    test = [[], []]
     for f in testfiles:
         if f.find('malware') != -1:
-            test.append((load(f), 0))
+            test[0].append(load(f))
         else:
-            test.append((load(f), 1))
-    train = []
+            test[1].append(load(f))
+    train = [[], []]
     for f in trainfiles:
         if f.find('malware') != -1:
-            train.append((load(f), 0))
+            train[0].append(load(f))
         else:
-            train.append((load(f), 1))
+            train[1].append(load(f))
     return train, test
 
 
 def get_iter(dataset, batch_size):
-    n = len(dataset)
+    benign, malware = dataset
+    n = (len(benign) + len(malware)) // batch_size
+    random.shuffle(benign)
+    random.shuffle(malware)
+    size1 = benign // n
+    size2 = malware // n
     res = []
-    for i in range(n // batch_size):
+    for i in range(n):
         x = []
         y = []
-        for j in range(batch_size):
-            data = dataset[i * batch_size + j]
-            x.append(data[0])
-            y.append(data[1])
+        for j in range(size1):
+            data = benign[i * size1 + j]
+            x.append(data)
+            y.append(0)
+        for j in range(size2):
+            data = malware[i * size2 + j]
+            x.append(data)
+            y.append(1)
         res.append((x, y))
     return res
-

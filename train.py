@@ -69,7 +69,6 @@ def train(train_data, test_data, batch_size, net, loss, trainer, ctx, num_epochs
         ctx = [ctx]
     test_iter = load.get_iter(test_data, batch_size)
     for epoch in range(1, num_epochs + 1):
-        random.shuffle(train_data)
         train_iter = load.get_iter(train_data, batch_size)
 
         train_l_sum, train_acc_sum, n, m = 0.0, 0.0, 0.0, 0.0

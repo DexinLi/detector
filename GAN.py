@@ -83,7 +83,6 @@ def train(train_data, test_data, batch_size, netD, netG, loss, trainerD, trainer
     print("training on", ctx)
 
     for epoch in range(1, num_epochs + 1):
-        random.shuffle(train_data)
         train_iter = load.get_iter(train_data, batch_size=batch_size)
         test_iter = load.get_iter(test_data, 25)
 
@@ -114,7 +113,7 @@ def train(train_data, test_data, batch_size, netD, netG, loss, trainerD, trainer
                 dis_l_sum += ls.sum().asscalar()
                 ls.backward()
 
-            trainerD.step(len(fake) + len(real), True)
+            trainerD.step(len(fake) + len(feat))
 
             n += len(feat) + len(fake)
 
@@ -139,7 +138,7 @@ def train(train_data, test_data, batch_size, netD, netG, loss, trainerD, trainer
 
             gen_l_sum += ls.sum().asscalar()
 
-            trainerG.step(len(fake))
+            trainerG.step(len(fake), True)
 
             gm += len(fake)
 
