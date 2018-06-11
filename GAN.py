@@ -24,9 +24,9 @@ def add_noise(x):
     return x + noise + (1024 * 1023 - len(x)) * [0]
 
 
-def get_real_in(real):
+def get_real_in(real, ctx):
     real = [data + [0] * (1024 * 1024 - len(data)) for data in real]
-    return ndarray.array(real)
+    return ndarray.array(real, ctx=ctx)
 
 
 def _get_fake_in_D(fake, netG, ctx):
@@ -62,10 +62,10 @@ def evaluate_accuracy(data_iter, netD, netG, ctx):
 
     for batch in data_iter:
         real, fake = batch
-        real_in = get_real_in(real)
-        real_label = ndarray.zeros(len(real))
+        real_in = get_real_in(real, ctx=ctx)
+        real_label = ndarray.zeros(len(real), ctx=ctx)
         fake_in = _get_fake_in_D(fake, netG, ctx)
-        fake_label = ndarray.ones(len(fake))
+        fake_label = ndarray.ones(len(fake), ctx=ctx)
         acc += (netD(real_in).argmax(axis=1) == real_label).sum().copyto(mxnet.cpu())
         acc += (netD(fake_in).argmax(axis=1) == fake_label).sum().copyto(mxnet.cpu())
 
@@ -98,10 +98,10 @@ def train(train_data, test_data, batch_size, netD, netG, loss, trainerD, trainer
             ###########################
 
             real, fake = batch
-            real_in = get_real_in(real)
-            real_label = ndarray.zeros(len(real))
+            real_in = get_real_in(real, ctx)
+            real_label = ndarray.zeros(len(real), ctx=ctx)
             fake_in = _get_fake_in_D(fake, netG, ctx)
-            fake_label = ndarray.ones(len(fake))
+            fake_label = ndarray.ones(len(fake), ctx=ctx)
 
             with autograd.record():
 
