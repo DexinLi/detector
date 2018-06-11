@@ -54,7 +54,7 @@ def _get_fake_in_G(fake, netG, ctx):
 
 def get_iter(batch, ctx):
     fake = []
-    for i in range(len(batch)):
+    for i in range(len(batch[1])):
         if batch[1][i] == 1:
             fake.append(batch[0][i])
     feature, label = batch

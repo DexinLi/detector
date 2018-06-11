@@ -45,8 +45,8 @@ def get_iter(dataset, batch_size):
     n = (len(benign) + len(malware)) // batch_size
     random.shuffle(benign)
     random.shuffle(malware)
-    size1 = benign // n
-    size2 = malware // n
+    size1 = len(benign) // n
+    size2 = len(malware) // n
     res = []
     for i in range(n):
         x = []
