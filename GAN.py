@@ -52,6 +52,16 @@ def _get_fake_in_G(fake, netG, ctx):
     return res
 
 
+def get_iter1(batch, ctx):
+    fake = []
+    for i in range(len(batch[1])):
+        if batch[1][i] == 1:
+            fake.append(batch[0][i])
+    feature, label = batch
+    feature = [data + [0] * (1024 * 1024 - len(data)) for data in feature]
+    return fake, ndarray.array(feature, ctx), ndarray.array(label, ctx)
+
+
 def get_iter(batch, ctx):
     fake = []
     feature = []
@@ -70,7 +80,7 @@ def evaluate_accuracy(data_iter, netD, netG, ctx):
     acc = ndarray.array([0])
 
     for batch in data_iter:
-        fake, feat, label = get_iter(batch, ctx)
+        fake, feat, label = get_iter1(batch, ctx)
         fake_in = _get_fake_in_D(fake, netG, ctx)
         fake_label = ndarray.ones(len(fake), ctx=ctx)
         acc += (netD(feat).argmax(axis=1) == label).sum().copyto(mxnet.cpu())
@@ -103,7 +113,7 @@ def train(train_data, test_data, batch_size, netD, netG, loss, trainerD, trainer
             # (1) Update D network: maximize log(D(x, y)) + log(1 - D(x, G(x, z)))
             ###########################
 
-            fake, feat, label = get_iter(batch, ctx)
+            fake, feat, label = get_iter1(batch, ctx)
             fake_in = _get_fake_in_D(fake, netG, ctx)
             fake_label = ndarray.ones(len(fake), ctx=ctx)
             Xs = ndarray.concat(feat, fake_in, dim=0)
