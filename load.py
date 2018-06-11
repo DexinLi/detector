@@ -22,7 +22,7 @@ def load(path):
 def loadpath():
     with open('test.txt', 'r') as f:
         testfiles = f.read().splitlines()
-    with open('train.txt','r') as f:
+    with open('train.txt', 'r') as f:
         trainfiles = f.read().splitlines()
     test = []
     for f in testfiles:
@@ -50,4 +50,20 @@ def get_iter(dataset, batch_size):
             x.append(data[0])
             y.append(data[1])
         res.append((x, y))
+    return res
+
+
+def get_gan_iter(dataset, batch_size):
+    n = len(dataset)
+    res = []
+    for i in range(n // batch_size):
+        real = []
+        fake = []
+        for j in range(batch_size):
+            data = dataset[i * batch_size + j]
+            if data[1] == 0:
+                real.append(data[0])
+            else:
+                fake.append(data[0])
+        res.append((real, fake))
     return res

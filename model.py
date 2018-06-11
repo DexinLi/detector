@@ -33,6 +33,30 @@ def get_netD1():
              nn.MaxPool1D(pool_size=4, strides=1),
              nn.Conv1D(channels=128, kernel_size=512, strides=512, activation='relu'),
              nn.MaxPool1D(pool_size=4, strides=4),
+             nn.Conv1D(channels=256, kernel_size=4, strides=4, activation='relu'),
+             nn.MaxPool1D(pool_size=4, strides=4),
              nn.Dense(128),
              nn.Dense(2))
     return netD
+
+
+def get_netG():
+    netG = nn.Sequential()
+    netG.add(nn.Embedding(256, 8),
+             GLU(channels=128, kernel_size=512, stride=512),
+             nn.MaxPool1D(128, 128),
+             nn.Dense(1024))
+    return netG
+
+
+def get_netG1():
+    netG = nn.Sequential()
+    netG.add(
+        nn.Conv1D(channels=8, kernel_size=4, padding=0, activation='relu'),
+        nn.MaxPool1D(strides=2),
+        nn.Conv1D(channels=128, kernel_size=8, strides=8, activation='relu'),
+        nn.MaxPool1D(pool_size=4, strides=4),
+        nn.Conv1D(channels=256, kernel_size=4, strides=4, activation='relu'),
+        nn.Dense(1024)
+    )
+    return netG
