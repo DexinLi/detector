@@ -24,11 +24,6 @@ def add_noise(x):
     return x + noise + (1024 * 1023 - len(x)) * [0]
 
 
-def get_real_in(real, ctx):
-    real = [data + [0] * (1024 * 1024 - len(data)) for data in real]
-    return ndarray.array(real, ctx=ctx)
-
-
 def _get_fake_in_D(fake, netG, ctx):
     n = len(fake)
     fake_in = [add_noise(x) for x in fake]
@@ -57,16 +52,24 @@ def _get_fake_in_G(fake, netG, ctx):
     return res
 
 
+def get_iter(batch, ctx):
+    fake = []
+    for i in range(len(batch)):
+        if batch[1][i] == 1:
+            fake.append(batch[0][i])
+    feature, label = batch
+    feature = [data + [0] * (1024 * 1024 - len(data)) for data in feature]
+    return fake, ndarray.array(feature, ctx), ndarray.array(label, ctx)
+
+
 def evaluate_accuracy(data_iter, netD, netG, ctx):
     acc = ndarray.array([0])
 
     for batch in data_iter:
-        real, fake = batch
-        real_in = get_real_in(real, ctx=ctx)
-        real_label = ndarray.zeros(len(real), ctx=ctx)
+        fake, feat, label = get_iter(batch, ctx)
         fake_in = _get_fake_in_D(fake, netG, ctx)
         fake_label = ndarray.ones(len(fake), ctx=ctx)
-        acc += (netD(real_in).argmax(axis=1) == real_label).sum().copyto(mxnet.cpu())
+        acc += (netD(feat).argmax(axis=1) == label).sum().copyto(mxnet.cpu())
         acc += (netD(fake_in).argmax(axis=1) == fake_label).sum().copyto(mxnet.cpu())
 
         acc.wait_to_read()
@@ -81,8 +84,8 @@ def train(train_data, test_data, batch_size, netD, netG, loss, trainerD, trainer
 
     for epoch in range(1, num_epochs + 1):
         random.shuffle(train_data)
-        train_iter = load.get_gan_iter(train_data, batch_size=batch_size)
-        test_iter = load.get_gan_iter(test_data, 25)
+        train_iter = load.get_iter(train_data, batch_size=batch_size)
+        test_iter = load.get_iter(test_data, 25)
 
         dis_l_sum, disc_acc_sum, n, dm = 0.0, 0.0, 0.0, 0.0
         gen_l_sum, gen_acc_sum, gm = 0.0, 0.0, 0.0
@@ -97,28 +100,25 @@ def train(train_data, test_data, batch_size, netD, netG, loss, trainerD, trainer
             # (1) Update D network: maximize log(D(x, y)) + log(1 - D(x, G(x, z)))
             ###########################
 
-            real, fake = batch
-            real_in = get_real_in(real, ctx)
-            real_label = ndarray.zeros(len(real), ctx=ctx)
+            fake, feat, label = get_iter(batch, ctx)
             fake_in = _get_fake_in_D(fake, netG, ctx)
             fake_label = ndarray.ones(len(fake), ctx=ctx)
-            Xs = ndarray.concat(real_in, fake_in, dim=0)
-            ys = ndarray.concat(real_label, fake_label, dim=0)
+            Xs = ndarray.concat(feat, fake_in, dim=0)
+            ys = ndarray.concat(label, fake_label, dim=0)
 
             with autograd.record():
 
                 y_hats = netD(Xs)
                 disc_acc_sum += (y_hats.argmax(axis=1) == ys).sum().asscalar()
-                ls = loss(y_hats, real_label)
+                ls = loss(y_hats, ys) * 0.5
                 dis_l_sum += ls.sum().asscalar()
-                ls *= 0.5
                 ls.backward()
 
-            trainerD.step(len(fake) + len(real))
+            trainerD.step(len(fake) + len(real), True)
 
-            n += len(real) + len(fake)
+            n += len(feat) + len(fake)
 
-            dm += len(real) + len(fake)
+            dm += len(feat) + len(fake)
 
             ############################
             # (2) Update G network: maximize log(D(x, G(x, z)))
@@ -156,6 +156,8 @@ def train(train_data, test_data, batch_size, netD, netG, loss, trainerD, trainer
             epoch, dis_l_sum / n, disc_acc_sum / dm, test_acc, time.time() - start
 
         ))
+        netD.save_params("%d-test acc %.3fD" % (epoch, test_acc))
+        netG.save_params("%d-test acc %.3fG" % (epoch, test_acc))
 
 
 ctx = get_ctx()

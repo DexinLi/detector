@@ -52,18 +52,3 @@ def get_iter(dataset, batch_size):
         res.append((x, y))
     return res
 
-
-def get_gan_iter(dataset, batch_size):
-    n = len(dataset)
-    res = []
-    for i in range(n // batch_size):
-        real = []
-        fake = []
-        for j in range(batch_size):
-            data = dataset[i * batch_size + j]
-            if data[1] == 0:
-                real.append(data[0])
-            else:
-                fake.append(data[0])
-        res.append((real, fake))
-    return res
