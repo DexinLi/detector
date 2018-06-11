@@ -107,11 +107,12 @@ def train(train_data, test_data, batch_size, netD, netG, loss, trainerD, trainer
 
                 y_hats = netD(real_in)
                 disc_acc_sum += (y_hats.argmax(axis=1) == real_label).sum().asscalar()
-                ls = loss(y_hats, real_label)
+                ls1 = loss(y_hats, real_label)
 
                 y_hats = netD(fake_in)
                 disc_acc_sum += (y_hats.argmax(axis=1) == fake_label).sum().asscalar()
-                ls += loss(y_hats, fake_label)
+                ls2 = loss(y_hats, fake_label)
+                ls = ls1 + ls2
                 dis_l_sum += ls.sum().asscalar()
                 ls *= 0.5
                 ls.backward()
