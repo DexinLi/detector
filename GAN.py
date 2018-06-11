@@ -54,10 +54,14 @@ def _get_fake_in_G(fake, netG, ctx):
 
 def get_iter(batch, ctx):
     fake = []
+    feature = []
+    label = []
     for i in range(len(batch[1])):
-        if batch[1][i] == 1:
+        if batch[1][i] == 1 and i % 2 == 0:
             fake.append(batch[0][i])
-    feature, label = batch
+        else:
+            feature.append(batch[0][i])
+            label.append(batch[1][i])
     feature = [data + [0] * (1024 * 1024 - len(data)) for data in feature]
     return fake, ndarray.array(feature, ctx), ndarray.array(label, ctx)
 
@@ -109,7 +113,7 @@ def train(train_data, test_data, batch_size, netD, netG, loss, trainerD, trainer
 
                 y_hats = netD(Xs)
                 disc_acc_sum += (y_hats.argmax(axis=1) == ys).sum().asscalar()
-                ls = loss(y_hats, ys) * 0.5
+                ls = loss(y_hats, ys)
                 dis_l_sum += ls.sum().asscalar()
                 ls.backward()
 
@@ -179,5 +183,5 @@ trainerG = gluon.Trainer(netG.collect_params(), 'sgd', {'learning_rate': 0.008})
 import random
 
 traindata, testdata = load.loadpath()
-batch_size = 32
+batch_size = 25
 train(traindata, testdata, batch_size, netD, netG, loss, trainerD, trainerG, ctx, 30, 10)
