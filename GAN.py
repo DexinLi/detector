@@ -78,17 +78,18 @@ def get_iter(batch, ctx):
 
 def evaluate_accuracy(data_iter, netD, netG, ctx):
     acc = ndarray.array([0])
-
+    n = 0
     for batch in data_iter:
         fake, feat, label = get_iter1(batch, ctx)
         fake_in = _get_fake_in_D(fake, netG, ctx)
         fake_label = ndarray.ones(len(fake), ctx=ctx)
         acc += (netD(feat).argmax(axis=1) == label).sum().copyto(mxnet.cpu())
         acc += (netD(fake_in).argmax(axis=1) == fake_label).sum().copyto(mxnet.cpu())
+        n += len(fake)
 
         acc.wait_to_read()
 
-    return acc.asscalar() / 1000
+    return acc.asscalar() / (1000 + n)
 
 
 def train(train_data, test_data, batch_size, netD, netG, loss, trainerD, trainerG, ctx, num_epochs, print_batches=None):
@@ -129,12 +130,12 @@ def train(train_data, test_data, batch_size, netD, netG, loss, trainerD, trainer
                 ls.backward()
 
             trainerD.step(len(fake) + len(feat))
-            params = netD.collect_params()
-            for x in params:
-                p = params[x].data()
-                ndarray.clip(p, -c, c, out=p)
+            # params = netD.collect_params()
+            # for x in params:
+            #     p = params[x].data()
+            #     ndarray.clip(p, -c, c, out=p)
 
-            n += len(feat) + len(fake)
+            n += len(feat)
 
             dm += len(feat) + len(fake)
 
@@ -164,14 +165,14 @@ def train(train_data, test_data, batch_size, netD, netG, loss, trainerD, trainer
             if print_batches and (i + 1) % print_batches == 0:
                 print("batch %d, dis_loss %f, dis acc %f,gen_loss %f, gen acc %f" % (
 
-                    n, dis_l_sum / n, disc_acc_sum / dm, gen_l_sum / n, gen_acc_sum / gm
+                    n, dis_l_sum / dm, disc_acc_sum / dm, gen_l_sum / n, gen_acc_sum / gm
 
                 ))
         test_acc = evaluate_accuracy(test_iter, netD, netG, ctx)
 
         print("epoch %d, loss %.4f, train acc %.3f, test acc %.3f, time %.1f sec" % (
 
-            epoch, dis_l_sum / n, disc_acc_sum / dm, test_acc, time.time() - start
+            epoch, dis_l_sum / dm, disc_acc_sum / dm, test_acc, time.time() - start
 
         ))
         netD.save_params("%d-test-acc_%.3fD" % (epoch, test_acc))
@@ -192,9 +193,11 @@ else:
     netG.initialize(force_reinit=True, init=init.Xavier(), ctx=ctx)
 
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
-
-trainerD = gluon.Trainer(netD.collect_params(), 'sgd', {'learning_rate': 0.008})
-trainerG = gluon.Trainer(netG.collect_params(), 'sgd', {'learning_rate': 0.008})
+scheduler = mxnet.lr_scheduler.FactorScheduler(100, 0.9)
+trainerD = gluon.Trainer(netD.collect_params(), 'sgd',
+                         {'learning_rate': 0.0001, 'wd': 1.5e-4, 'lr_scheduler': scheduler, 'momentum': 0.9})
+trainerG = gluon.Trainer(netG.collect_params(), 'sgd',
+                         {'learning_rate': 0.008, 'wd': 1.5e-4, 'lr_scheduler': scheduler, 'momentum': 0.9})
 import random
 
 traindata, testdata = load.loadpath()
