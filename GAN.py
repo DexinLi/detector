@@ -95,6 +95,7 @@ def train(train_data, test_data, batch_size, netD, netG, loss, trainerD, trainer
     """Train and evaluate a model."""
 
     print("training on", ctx)
+    c = 0.01
 
     for epoch in range(1, num_epochs + 1):
         train_iter = load.get_iter(train_data, batch_size=batch_size)
@@ -128,6 +129,10 @@ def train(train_data, test_data, batch_size, netD, netG, loss, trainerD, trainer
                 ls.backward()
 
             trainerD.step(len(fake) + len(feat))
+            params = netD.collect_params()
+            for i in params:
+                p = params[i].data()
+                ndarray.clip(p, -c, c, out=p)
 
             n += len(feat) + len(fake)
 
