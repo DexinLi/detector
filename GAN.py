@@ -28,13 +28,14 @@ def _get_fake_in_D(fake, netG, ctx):
     n = len(fake)
     fake_in = [add_noise(x) for x in fake]
     padding = [[0] * (1024 * 1023 - len(x)) for x in fake]
-    fake_out = netG(ndarray.array(fake_in, ctx=ctx)).detach()
+    fake_in = ndarray.array(fake_in, ctx)
+    fake_out = netG(fake_in).detach()
     res = ndarray.zeros((n, 1024 * 1024), ctx=ctx)
     for x, y, z, i in zip(fake, fake_out, padding, range(n)):
         pre = ndarray.zeros(len(x), ctx=ctx)
         suf = ndarray.array(z, ctx=ctx)
         data = ndarray.concat(pre, y, suf, dim=0)
-        res[i] = data
+        res[i] = data + fake_in
     return res
 
 
@@ -42,13 +43,14 @@ def _get_fake_in_G(fake, netG, ctx):
     n = len(fake)
     fake_in = [add_noise(x) for x in fake]
     padding = [[0] * (1024 * 1023 - len(x)) for x in fake]
-    fake_out = netG(ndarray.array(fake_in, ctx=ctx))
+    fake_in = ndarray.array(fake_in, ctx)
+    fake_out = netG(fake_in)
     res = ndarray.zeros((n, 1024 * 1024), ctx=ctx)
     for x, y, z, i in zip(fake, fake_out, padding, range(n)):
         pre = ndarray.zeros(len(x), ctx=ctx)
         suf = ndarray.array(z, ctx=ctx)
         data = ndarray.concat(pre, y, suf, dim=0)
-        res[i] = data
+        res[i] = data + fake_in
     return res
 
 
