@@ -130,8 +130,8 @@ def train(train_data, test_data, batch_size, netD, netG, loss, trainerD, trainer
 
             trainerD.step(len(fake) + len(feat))
             params = netD.collect_params()
-            for i in params:
-                p = params[i].data()
+            for x in params:
+                p = params[x].data()
                 ndarray.clip(p, -c, c, out=p)
 
             n += len(feat) + len(fake)
@@ -174,8 +174,8 @@ def train(train_data, test_data, batch_size, netD, netG, loss, trainerD, trainer
             epoch, dis_l_sum / n, disc_acc_sum / dm, test_acc, time.time() - start
 
         ))
-        netD.save_params("%d-test acc %.3fD" % (epoch, test_acc))
-        netG.save_params("%d-test acc %.3fG" % (epoch, test_acc))
+        netD.save_params("%d-test-acc_%.3fD" % (epoch, test_acc))
+        netG.save_params("%d-test-acc_%.3fG" % (epoch, test_acc))
 
 
 ctx = get_ctx()
