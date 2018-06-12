@@ -35,8 +35,8 @@ def _get_fake_in_D(fake, netG, ctx):
         pre = ndarray.zeros(len(x), ctx=ctx)
         suf = ndarray.array(z, ctx=ctx)
         data = ndarray.concat(pre, y, suf, dim=0)
-        res[i] = data + fake_in
-    return res
+        res[i] = data
+    return res + fake_in
 
 
 def _get_fake_in_G(fake, netG, ctx):
@@ -50,8 +50,8 @@ def _get_fake_in_G(fake, netG, ctx):
         pre = ndarray.zeros(len(x), ctx=ctx)
         suf = ndarray.array(z, ctx=ctx)
         data = ndarray.concat(pre, y, suf, dim=0)
-        res[i] = data + fake_in
-    return res
+        res[i] = data
+    return res + fake_in
 
 
 def get_iter1(batch, ctx):
@@ -80,7 +80,7 @@ def get_iter(batch, ctx):
 
 ctx = get_ctx()
 netD0 = model.get_netD()
-netD0.load_params('paramD', ctx=ctx)
+netD0.load_params('paramD0', ctx=ctx)
 
 
 def evaluate_accuracy(data_iter, netD, netG, ctx):
@@ -202,11 +202,12 @@ else:
     netG.initialize(force_reinit=True, init=init.Xavier(), ctx=ctx)
 
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
-scheduler = mxnet.lr_scheduler.FactorScheduler(100, 0.9)
+schedulerD = mxnet.lr_scheduler.FactorScheduler(100, 0.8)
+schedulerG = mxnet.lr_scheduler.FactorScheduler(100, 0.9)
 trainerD = gluon.Trainer(netD.collect_params(), 'sgd',
-                         {'learning_rate': 0.0001, 'wd': 1.5e-4, 'lr_scheduler': scheduler, 'momentum': 0.9})
+                         {'learning_rate': 0.01, 'wd': 1.5e-4, 'lr_scheduler': schedulerD, 'momentum': 0.9})
 trainerG = gluon.Trainer(netG.collect_params(), 'sgd',
-                         {'learning_rate': 0.008, 'wd': 1.5e-4, 'lr_scheduler': scheduler, 'momentum': 0.9})
+                         {'learning_rate': 0.01, 'wd': 1.5e-4, 'lr_scheduler': schedulerG, 'momentum': 0.9})
 import random
 
 traindata, testdata = load.loadpath()
