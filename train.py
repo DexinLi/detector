@@ -133,7 +133,7 @@ else:
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
 scheduler = mxnet.lr_scheduler.FactorScheduler(100, 0.9)
 trainer = gluon.Trainer(net.collect_params(), 'sgd',
-                        {'learning_rate': 0.008, 'wd': 2e-4, 'lr_scheduler': scheduler, 'momentum': 0.9})
+                        {'learning_rate': 0.008, 'wd': 2e-5, 'lr_scheduler': scheduler, 'momentum': 0.9})
 train_data, test_data = load.loadpath()
 batch_size = 32
 train(train_data, test_data, batch_size, net, loss, trainer, ctx, 30, 10)

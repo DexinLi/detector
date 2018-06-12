@@ -30,13 +30,14 @@ def _get_fake_in_D(fake, netG, ctx):
     padding = [[0] * (1024 * 1023 - len(x)) for x in fake]
     fake_in = ndarray.array(fake_in, ctx)
     fake_out = netG(fake_in).detach()
-    res = ndarray.zeros((n, 1024 * 1024), ctx=ctx)
+    res = [[0] * (1024 * 1024 - len(x)) for x in fake]
+    res = ndarray.array(res, ctx)
     for x, y, z, i in zip(fake, fake_out, padding, range(n)):
         pre = ndarray.zeros(len(x), ctx=ctx)
         suf = ndarray.array(z, ctx=ctx)
         data = ndarray.concat(pre, y, suf, dim=0)
-        res[i] = data
-    return res + fake_in
+        res[i] = data + res[i]
+    return res
 
 
 def _get_fake_in_G(fake, netG, ctx):
@@ -45,13 +46,14 @@ def _get_fake_in_G(fake, netG, ctx):
     padding = [[0] * (1024 * 1023 - len(x)) for x in fake]
     fake_in = ndarray.array(fake_in, ctx)
     fake_out = netG(fake_in)
-    res = ndarray.zeros((n, 1024 * 1024), ctx=ctx)
+    res = [[0] * (1024 * 1024 - len(x)) for x in fake]
+    res = ndarray.array(res, ctx)
     for x, y, z, i in zip(fake, fake_out, padding, range(n)):
         pre = ndarray.zeros(len(x), ctx=ctx)
         suf = ndarray.array(z, ctx=ctx)
         data = ndarray.concat(pre, y, suf, dim=0)
-        res[i] = data
-    return res + fake_in
+        res[i] = data + res[i]
+    return res
 
 
 def get_iter1(batch, ctx):
@@ -202,7 +204,7 @@ else:
     netG.initialize(force_reinit=True, init=init.Xavier(), ctx=ctx)
 
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
-schedulerD = mxnet.lr_scheduler.FactorScheduler(100, 0.8)
+schedulerD = mxnet.lr_scheduler.FactorScheduler(100, 0.88)
 schedulerG = mxnet.lr_scheduler.FactorScheduler(100, 0.9)
 trainerD = gluon.Trainer(netD.collect_params(), 'sgd',
                          {'learning_rate': 0.01, 'wd': 1.5e-4, 'lr_scheduler': schedulerD, 'momentum': 0.9})
