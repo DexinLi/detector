@@ -76,8 +76,14 @@ def get_iter(batch, ctx):
     return fake, ndarray.array(feature, ctx), ndarray.array(label, ctx)
 
 
+ctx = get_ctx()
+netD0 = model.get_netD()
+netD0.load_params('paramD', ctx=ctx)
+
+
 def evaluate_accuracy(data_iter, netD, netG, ctx):
     acc = ndarray.array([0])
+    acc1 = ndarray.array([0])
     n = 0
     for batch in data_iter:
         fake, feat, label = get_iter1(batch, ctx)
@@ -85,11 +91,13 @@ def evaluate_accuracy(data_iter, netD, netG, ctx):
         fake_label = ndarray.ones(len(fake), ctx=ctx)
         acc += (netD(feat).argmax(axis=1) == label).sum().copyto(mxnet.cpu())
         acc += (netD(fake_in).argmax(axis=1) == fake_label).sum().copyto(mxnet.cpu())
+        acc1 += (netD0(fake_in).argmax(axis=1) == fake_label).sum().copyto(mxnet.cpu())
         n += len(fake)
 
         acc.wait_to_read()
+        acc1.wait_to_read()
 
-    return acc.asscalar() / (1000 + n)
+    return acc.asscalar() / (1000 + n), acc1.asscalar() / n
 
 
 def train(train_data, test_data, batch_size, netD, netG, loss, trainerD, trainerG, ctx, num_epochs, print_batches=None):
@@ -165,21 +173,20 @@ def train(train_data, test_data, batch_size, netD, netG, loss, trainerD, trainer
             if print_batches and (i + 1) % print_batches == 0:
                 print("batch %d, dis_loss %f, dis acc %f,gen_loss %f, gen acc %f" % (
 
-                    n, dis_l_sum / dm, disc_acc_sum / dm, gen_l_sum / n, gen_acc_sum / gm
+                    n, dis_l_sum / dm, disc_acc_sum / dm, gen_l_sum / gm, gen_acc_sum / gm
 
                 ))
-        test_acc = evaluate_accuracy(test_iter, netD, netG, ctx)
+        test_acc, test_acc1 = evaluate_accuracy(test_iter, netD, netG, ctx)
 
-        print("epoch %d, loss %.4f, train acc %.3f, test acc %.3f, time %.1f sec" % (
+        print("epoch %d, loss %.4f, train acc %.3f, test acc %.3f,test acc1 %.3f, time %.1f sec" % (
 
-            epoch, dis_l_sum / dm, disc_acc_sum / dm, test_acc, time.time() - start
+            epoch, dis_l_sum / dm, disc_acc_sum / dm, test_acc, test_acc1, time.time() - start
 
         ))
         netD.save_params("%d-test-acc_%.3fD" % (epoch, test_acc))
-        netG.save_params("%d-test-acc_%.3fG" % (epoch, test_acc))
+        netG.save_params("%d-test-acc_%.3fG" % (epoch, test_acc1))
 
 
-ctx = get_ctx()
 netD = model.get_netD()
 netG = model.get_netG()
 if os.path.exists('paramD'):
