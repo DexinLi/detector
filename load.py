@@ -16,7 +16,7 @@ def load(path):
                 res += i
             else:
                 break
-    return res
+    return res+[0]*(1024*1024-len(res))
 
 
 def loadpath():

@@ -8,4 +8,4 @@ dependencies:
 
 - pip:
 
-  - mxnet-cu80>=1.2.0b20180427
+  - mxnet-cu91

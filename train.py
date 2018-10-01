@@ -24,7 +24,7 @@ def _get_batch(batch, ctx):
     if isinstance(ctx, mxnet.Context):
         ctx = [ctx]
     features, labels = batch
-    features = [data + (1024 * 1024 - len(data)) * [0] for data in features]
+#    features = [data + (1024 * 1024 - len(data)) * [0] for data in features]
 
     return (gutils.split_and_load(features, ctx),
 
@@ -75,13 +75,13 @@ def train(train_data, test_data, batch_size, net, loss, trainer, ctx, num_epochs
         train_l_sum, train_acc_sum, n, m = 0.0, 0.0, 0.0, 0.0
 
         start = time.time()
-
+        load_time = 0
         i = 0
         for batch in train_iter:
             i += 1
-
+            t1 = time.time()
             Xs, ys, batch_size = _get_batch(batch, ctx)
-
+            load_time += time.time()-t1
             ls = []
 
             with autograd.record():
@@ -111,16 +111,17 @@ def train(train_data, test_data, batch_size, net, loss, trainer, ctx, num_epochs
                     n, train_l_sum / n, train_acc_sum / m
 
                 ))
-
+        tt = time.time()
         test_acc = evaluate_accuracy(test_iter, net, ctx)
-
+        print('test_time',time.time()-tt)
         print("epoch %d, loss %.4f, train acc %.3f, test acc %.3f, time %.1f sec" % (
 
             epoch, train_l_sum / n, train_acc_sum / m, test_acc, time.time() - start
 
         ))
-        net.save_params('param')
-        net.save_params("test_acc_%.3f_train_acc_%.3f-param" % (
+        print ('load time', load_time)
+        net.save_parameters('param')
+        net.save_parameters("test_acc_%.3f_train_acc_%.3f-param" % (
 
             test_acc, train_acc_sum / m))
 
@@ -128,13 +129,13 @@ def train(train_data, test_data, batch_size, net, loss, trainer, ctx, num_epochs
 net = model.get_netD()
 ctx = get_ctx()
 if os.path.exists('param'):
-    net.load_params('param', ctx=ctx)
+    net.load_parameters('param', ctx=ctx)
 else:
     net.initialize(force_reinit=True, init=init.Xavier(), ctx=ctx)
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
 scheduler = mxnet.lr_scheduler.FactorScheduler(100, 0.9)
 trainer = gluon.Trainer(net.collect_params(), 'sgd',
-                        {'learning_rate': 0.008, 'wd': 2e-4, 'lr_scheduler': scheduler, 'momentum': 0.9})
+                        {'learning_rate': 0.0001, 'wd': 2e-4, 'lr_scheduler': scheduler, 'momentum': 0.9})
 train_data, test_data = load.loadpath()
-batch_size = 32
+batch_size = 50
 train(train_data, test_data, batch_size, net, loss, trainer, ctx, 30, 10)
